@@ -12,9 +12,9 @@ public interface AccountDao {
 
     BigDecimal getAccountBalanceByUsername(String username);
 
-    BigDecimal addFunds(BigDecimal amount);
+    BigDecimal addFunds(BigDecimal amount,Account account);
 
-    BigDecimal subtractFunds(BigDecimal amount);
+    BigDecimal subtractFunds(BigDecimal amount, Account account);
 
 
 }

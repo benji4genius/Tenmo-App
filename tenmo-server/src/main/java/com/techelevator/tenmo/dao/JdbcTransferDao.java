@@ -109,7 +109,8 @@ public class JdbcTransferDao implements TransferDao {
     @Override
     public List<Transfer> getTransfersByStatus(String statusType){
         List<Transfer> transfers = new ArrayList<>();
-        String sql = TRANSFER_SELECT + "JOIN transfer_status ON transfer.transfer_status_id = transfer_status.transfer_status_id";
+        String sql = TRANSFER_SELECT + "JOIN transfer_status ON transfer.transfer_status_id = transfer_status.transfer_status_id" +
+                "WHERE transfer_desc ILIKE ?"; // This part might change
 
 
         try {
