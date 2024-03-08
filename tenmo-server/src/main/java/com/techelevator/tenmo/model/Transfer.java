@@ -1,11 +1,15 @@
 package com.techelevator.tenmo.model;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 
 public class Transfer {
 
+    @NotNull(message = "Field cannot be Null!")
     private int transferID, transferTypeID, transferStatusID;
 
+    @NotBlank(message = "Field cannot Blank!")
     private int accountFromId, accountToId;
 
     private BigDecimal amount;

@@ -6,11 +6,14 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.CannotGetJdbcConnectionException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
+import org.springframework.stereotype.Component;
 
 import javax.sql.DataSource;
 import java.util.ArrayList;
 import java.util.List;
 
+
+@Component
 public class JdbcTransferDao implements TransferDao {
 
     private final String TRANSFER_SELECT = "SELECT transfer_id, transfer_type_id, transfer_status_id, account_from, account_to, amount" +
@@ -25,13 +28,31 @@ public class JdbcTransferDao implements TransferDao {
     }
 
     @Override
-    public List<Transfer> getTransfers(){
+    public Transfer createTransfer(Transfer transfer){
+        Transfer newTransfer = null;
+        String sql = INSERT_SELECT + "RETURNING transfer_id;";
+        try {
+            int newTransferID = jdbcTemplate.queryForObject(sql,int.class, transfer.getTransferTypeID(),transfer.getTransferStatusID(),
+                    transfer.getaccountFromId(), transfer.getaccountToId(), transfer.getAmount());
+            newTransfer = getTransferByID(newTransferID);
+        } catch (CannotGetJdbcConnectionException e) {
+            throw new DaoException("Unable to connect to server or database", e);
+        } catch (DataIntegrityViolationException e) {
+            throw new DaoException("Data integrity violation", e);
+        }
+        return newTransfer;
+    }
+
+    @Override
+    public List<Transfer> getTransfers(int accountID){
 
         List<Transfer> transfers = new ArrayList<>();
-        String sql = TRANSFER_SELECT;
+        String sql =
+                TRANSFER_SELECT +
+                "WHERE account_from = ? OR account_to = ?;";
 
         try {
-            SqlRowSet results = jdbcTemplate.queryForRowSet(sql);
+            SqlRowSet results = jdbcTemplate.queryForRowSet(sql, accountID);
             while (results.next()) {
                 transfers.add(mapRowToTransfer(results));
             }
@@ -48,10 +69,10 @@ public class JdbcTransferDao implements TransferDao {
     @Override
     public Transfer getTransferByID(int id){
         Transfer transfer = null;
-        String sql = TRANSFER_SELECT +
-                " WHERE transfer_id=?";
+        String sql =
+                TRANSFER_SELECT +
+                "WHERE transfer_id = ?;";
         try {
-
             SqlRowSet results = jdbcTemplate.queryForRowSet(sql, id);
             if (results.next()) {
                 transfer = mapRowToTransfer(results);
@@ -63,11 +84,10 @@ public class JdbcTransferDao implements TransferDao {
         }
 
         return transfer;
-
     }
 
     @Override
-    public List<Transfer> getTransfersByAccountFrom(int accountFrom){
+    public List<Transfer> getTransfersByAccountFrom(int accountFromID){
         List<Transfer> transfersByAccountFrom = new ArrayList<>();
         String sql = TRANSFER_SELECT + "WHERE account_from =?";
 
@@ -83,11 +103,10 @@ public class JdbcTransferDao implements TransferDao {
             throw new DaoException("Data integrity violation", e);
         }
         return transfersByAccountFrom;
-
     }
 
     @Override
-    public List<Transfer> getTransfersByAccountTo(int accountTo){
+    public List<Transfer> getTransfersByAccountTo(int accountToID){
         List<Transfer> transfersByAccountTo = new ArrayList<>();
         String sql = TRANSFER_SELECT + "WHERE account_to =?";
 
@@ -107,14 +126,15 @@ public class JdbcTransferDao implements TransferDao {
     }
 
     @Override
-    public List<Transfer> getTransfersByStatus(String statusType){
+    public List<Transfer> getTransfersByStatus(int statusTypeID){
         List<Transfer> transfers = new ArrayList<>();
-        String sql = TRANSFER_SELECT + "JOIN transfer_status ON transfer.transfer_status_id = transfer_status.transfer_status_id" +
-                "WHERE transfer_desc ILIKE ?"; // This part might change
+        String sql =
+                "SELECT * FROM transfer " +
+                        "WHERE transfer_status_id = ?;";
 
 
         try {
-            SqlRowSet results = jdbcTemplate.queryForRowSet(sql);
+            SqlRowSet results = jdbcTemplate.queryForRowSet(sql, statusTypeID);
             while (results.next()) {
                 transfers.add(mapRowToTransfer(results));
             }
@@ -128,23 +148,7 @@ public class JdbcTransferDao implements TransferDao {
 
     }
 
-    @Override
-    public Transfer createTransfer(Transfer transfer){
-        Transfer newTransfer = null;
-        String sql = INSERT_SELECT + "RETURNING transfer_id;";
-        try {
-            int newTransferID = jdbcTemplate.queryForObject(sql,int.class, transfer.getTransferTypeID(),transfer.getTransferStatusID(),
-                    transfer.getaccountFromId(), transfer.getaccountToId(), transfer.getAmount());
-            newTransfer = getTransferByID(newTransferID);
-        } catch (CannotGetJdbcConnectionException e) {
-            throw new DaoException("Unable to connect to server or database", e);
-        } catch (DataIntegrityViolationException e) {
-            throw new DaoException("Data integrity violation", e);
-        }
 
-        return newTransfer;
-
-    }
 
     private Transfer mapRowToTransfer(SqlRowSet results) {
         Transfer transfer = new Transfer();

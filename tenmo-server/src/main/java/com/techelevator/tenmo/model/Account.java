@@ -1,11 +1,15 @@
 package com.techelevator.tenmo.model;
 
+import javax.validation.constraints.NotBlank;
+import javax.validation.constraints.NotNull;
 import java.math.BigDecimal;
 
 public class Account {
 
+    @NotNull(message = "Field CANNOT be Null")
     private int accountID, userID;
-    
+
+    @NotNull(message = "Balance CANNOT be Null")
     private BigDecimal balance;
     
     public Account(int accountID, int userID, BigDecimal balance){
