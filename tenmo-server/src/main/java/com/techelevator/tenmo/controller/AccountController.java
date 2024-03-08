@@ -36,7 +36,7 @@ public class AccountController {
         }
     }
 
-    @RequestMapping(path ="/accountToUpdate=", method = RequestMethod.PUT)
+    @RequestMapping(path ="/balanceUpdate", method = RequestMethod.PUT)
     public void updateBalance(@Valid@RequestBody Account account) {
         try {
             accountDao.updateBalance(account);

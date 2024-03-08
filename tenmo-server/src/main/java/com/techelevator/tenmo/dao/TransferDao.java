@@ -5,6 +5,7 @@ import com.techelevator.tenmo.model.RegisterUserDto;
 import com.techelevator.tenmo.model.Transfer;
 import com.techelevator.tenmo.model.User;
 
+import java.util.HashMap;
 import java.util.List;
 
 public interface TransferDao {
@@ -12,6 +13,8 @@ public interface TransferDao {
     List<Transfer> getTransfers(int accountID);
 
     Transfer getTransferByID(int id);
+
+    HashMap<Integer, String> getStatuses();
 
     List<Transfer> getTransfersByAccountFrom(int accountFromID, Account myAccount);
 

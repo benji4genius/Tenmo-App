@@ -3,6 +3,7 @@ package com.techelevator.tenmo.dao;
 import com.techelevator.tenmo.exception.DaoException;
 import com.techelevator.tenmo.model.Account;
 import com.techelevator.tenmo.model.Transfer;
+import com.techelevator.tenmo.model.User;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.CannotGetJdbcConnectionException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Component;
 
 import javax.sql.DataSource;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 
@@ -67,6 +69,28 @@ public class JdbcTransferDao implements TransferDao {
 
     }
 
+    @Override
+    public HashMap<Integer, String> getStatuses(){
+        HashMap<Integer,String> statuses = new HashMap<>();
+        String sql =
+                "SELECT transfer_status_id, transfer_status_desc " +
+                        "FROM transfer_status " +
+                        "ORDER BY;";
+        try{
+            SqlRowSet results = jdbcTemplate.queryForRowSet(sql);
+            while(results.next()){
+                statuses.put(results.getInt("transfer_status_id"), results.getString("transfer_status_desc"));
+            }
+            if(statuses.size() != 3){
+                throw new DaoException("Error, not enough rows found!");
+            }
+        }catch (CannotGetJdbcConnectionException e) {
+            throw new DaoException("Unable to connect to server or database", e);
+        } catch (DataIntegrityViolationException e) {
+            throw new DaoException("Data integrity violation", e);
+        }
+        return statuses;
+    }
     @Override
     public Transfer getTransferByID(int id){
         Transfer transfer = null;
@@ -133,7 +157,6 @@ public class JdbcTransferDao implements TransferDao {
                 "SELECT * FROM transfer " +
                         "WHERE transfer_status_id = ?;";
 
-
         try {
             SqlRowSet results = jdbcTemplate.queryForRowSet(sql, statusTypeID);
             while (results.next()) {
@@ -148,7 +171,6 @@ public class JdbcTransferDao implements TransferDao {
         return transfers;
 
     }
-
 
 
     private Transfer mapRowToTransfer(SqlRowSet results) {
