@@ -1,6 +1,7 @@
 package com.techelevator.tenmo.dao;
 
 import com.techelevator.tenmo.exception.DaoException;
+import com.techelevator.tenmo.model.Account;
 import com.techelevator.tenmo.model.Transfer;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.CannotGetJdbcConnectionException;
@@ -23,8 +24,8 @@ public class JdbcTransferDao implements TransferDao {
             "VALUES (?, ?, ?, ?, ?)";
     private final JdbcTemplate jdbcTemplate;
 
-    public JdbcTransferDao(DataSource dataSource){
-        this.jdbcTemplate = new JdbcTemplate(dataSource);
+    public JdbcTransferDao(JdbcTemplate jdbcTemplate){
+        this.jdbcTemplate =  jdbcTemplate;
     }
 
     @Override
@@ -52,7 +53,7 @@ public class JdbcTransferDao implements TransferDao {
                 "WHERE account_from = ? OR account_to = ?;";
 
         try {
-            SqlRowSet results = jdbcTemplate.queryForRowSet(sql, accountID);
+            SqlRowSet results = jdbcTemplate.queryForRowSet(sql, accountID, accountID);
             while (results.next()) {
                 transfers.add(mapRowToTransfer(results));
             }
@@ -87,12 +88,12 @@ public class JdbcTransferDao implements TransferDao {
     }
 
     @Override
-    public List<Transfer> getTransfersByAccountFrom(int accountFromID){
+    public List<Transfer> getTransfersByAccountFrom(int accountFromID, Account myAccount){
         List<Transfer> transfersByAccountFrom = new ArrayList<>();
-        String sql = TRANSFER_SELECT + "WHERE account_from =?";
+        String sql = TRANSFER_SELECT + "WHERE account_from = ? AND account_to = ?;";
 
         try {
-            SqlRowSet results = jdbcTemplate.queryForRowSet(sql);
+            SqlRowSet results = jdbcTemplate.queryForRowSet(sql, accountFromID, myAccount.getAccountID());
             while (results.next()) {
                 transfersByAccountFrom.add(mapRowToTransfer(results));
             }
@@ -106,12 +107,12 @@ public class JdbcTransferDao implements TransferDao {
     }
 
     @Override
-    public List<Transfer> getTransfersByAccountTo(int accountToID){
+    public List<Transfer> getTransfersByAccountTo(Account myAccount, int accountToID){
         List<Transfer> transfersByAccountTo = new ArrayList<>();
-        String sql = TRANSFER_SELECT + "WHERE account_to =?";
+        String sql = TRANSFER_SELECT + "WHERE account_from = ? AND account_to = ?;";
 
         try {
-            SqlRowSet results = jdbcTemplate.queryForRowSet(sql);
+            SqlRowSet results = jdbcTemplate.queryForRowSet(sql, myAccount.getAccountID(), accountToID);
             while (results.next()) {
                 transfersByAccountTo.add(mapRowToTransfer(results));
             }

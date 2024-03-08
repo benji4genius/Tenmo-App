@@ -1,5 +1,6 @@
 package com.techelevator.tenmo.dao;
 
+import com.techelevator.tenmo.model.Account;
 import com.techelevator.tenmo.model.RegisterUserDto;
 import com.techelevator.tenmo.model.Transfer;
 import com.techelevator.tenmo.model.User;
@@ -12,9 +13,9 @@ public interface TransferDao {
 
     Transfer getTransferByID(int id);
 
-    List<Transfer> getTransfersByAccountFrom(int accountFromID);
+    List<Transfer> getTransfersByAccountFrom(int accountFromID, Account myAccount);
 
-    List<Transfer> getTransfersByAccountTo(int accountToID);
+    List<Transfer> getTransfersByAccountTo (Account myAccount, int accountToID);
 
     List<Transfer> getTransfersByStatus(int statusTypeID); //This is the subquery using status_id > status_type_descrip
 
