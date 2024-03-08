@@ -1,5 +1,6 @@
 package com.techelevator.tenmo;
 
+import com.techelevator.tenmo.model.Account;
 import com.techelevator.tenmo.model.AuthenticatedUser;
 import com.techelevator.tenmo.model.UserCredentials;
 import com.techelevator.tenmo.services.AccountService;
@@ -14,7 +15,7 @@ public class App {
     private final ConsoleService consoleService = new ConsoleService();
     private final AuthenticationService authenticationService = new AuthenticationService(API_BASE_URL);
     private final TransferService transferService = new TransferService(API_BASE_URL);
-    private final AccountService accountService = new AccountService(API_BASE_URL);
+    private final AccountService accountService = new AccountService();
 
     private AuthenticatedUser currentUser;
 
@@ -61,6 +62,8 @@ public class App {
         currentUser = authenticationService.login(credentials);
         if (currentUser == null) {
             consoleService.printErrorMessage();
+        }else{
+            accountService.setAuthToken(currentUser.getToken());
         }
     }
 
@@ -89,8 +92,7 @@ public class App {
     }
 
 	private void viewCurrentBalance() {
-        System.out.println(accountService.getAccountBalanceByUserID(currentUser.getUser().getId()));
-
+        System.out.println("Your current account balance is: $" + accountService.getAccountBalanceByUserID(currentUser.getUser().getId()));
 	}
 
 	private void viewTransferHistory() {

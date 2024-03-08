@@ -5,6 +5,7 @@ import com.techelevator.tenmo.exception.DaoException;
 import com.techelevator.tenmo.model.Account;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.web.firewall.RequestRejectedException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -14,6 +15,7 @@ import java.math.BigDecimal;
 import java.net.http.HttpRequest;
 
 @RestController
+@PreAuthorize("isAuthenticated()")
 @RequestMapping("/accounts")
 public class AccountController {
 
@@ -23,7 +25,7 @@ public class AccountController {
         this.accountDao = accountDao;
     }
 
-    @RequestMapping(path = "/{id}", method = RequestMethod.GET)
+    @RequestMapping(path = "/{userID}", method = RequestMethod.GET)
     public BigDecimal getAccountBalanceByUserID(@PathVariable int userID){
         BigDecimal accountBalance = null;
         try {
@@ -34,7 +36,7 @@ public class AccountController {
         }
     }
 
-    @RequestMapping(path ="/accountToUpdate={id}", method = RequestMethod.PUT)
+    @RequestMapping(path ="/accountToUpdate=", method = RequestMethod.PUT)
     public void updateBalance(@Valid@RequestBody Account account) {
         try {
             accountDao.updateBalance(account);

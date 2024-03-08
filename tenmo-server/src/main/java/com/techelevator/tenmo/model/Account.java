@@ -6,12 +6,10 @@ import java.math.BigDecimal;
 
 public class Account {
 
-    @NotNull(message = "Field CANNOT be Null")
     private int accountID, userID;
 
-    @NotNull(message = "Balance CANNOT be Null")
     private BigDecimal balance;
-    
+    public Account(){}
     public Account(int accountID, int userID, BigDecimal balance){
         this.accountID = accountID;
         this.userID = userID;

@@ -2,14 +2,12 @@ package com.techelevator.tenmo.dao;
 
 import com.techelevator.tenmo.exception.DaoException;
 import com.techelevator.tenmo.model.Account;
-import org.springframework.boot.autoconfigure.quartz.QuartzProperties;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.CannotGetJdbcConnectionException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.rowset.SqlRowSet;
 import org.springframework.stereotype.Component;
 
-import javax.sql.DataSource;
 import java.math.BigDecimal;
 
 @Component
@@ -28,18 +26,26 @@ public class JdbcAccountDao implements AccountDao {
     @Override
     public BigDecimal getAccountBalanceByUserID(int userID) {
         BigDecimal accountBalance= null;
-        String sql = "SELECT balance " +
+        String sql = "SELECT account_id, user_id, balance " +
                      "FROM account "  +
-                     "WHERE user_id =?;";
+                     "WHERE user_id = ?";
 
         try {
-            accountBalance = jdbcTemplate.queryForObject(sql, BigDecimal.class, userID);
+            Account account ;
+            SqlRowSet result = jdbcTemplate.queryForRowSet(sql, userID);
+            if(result.next()){
+                account = mapRowToAccount(result);
+                accountBalance = account.getBalance();
+                return accountBalance;
+            }else{
+                throw new DaoException("No Account Found");
+            }
+
         } catch (CannotGetJdbcConnectionException e) {
             throw new DaoException("Unable to connect to server or database", e);
         } catch (DataIntegrityViolationException e) {
             throw new DaoException("Data integrity violation", e);
         }
-        return accountBalance;
 
     }
 
@@ -59,6 +65,15 @@ public class JdbcAccountDao implements AccountDao {
             throw new DaoException("Data integrity violation", e);
         }
 
+    }
+
+    private Account mapRowToAccount(SqlRowSet results) {
+        Account account = new Account();
+        account.setAccountID(results.getInt("account_id"));
+        account.setUserID(results.getInt("user_id"));
+        account.setBalance(results.getBigDecimal("balance"));
+
+        return account;
     }
 }
 

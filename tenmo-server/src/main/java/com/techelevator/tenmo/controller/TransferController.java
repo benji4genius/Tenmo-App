@@ -5,6 +5,7 @@ import com.techelevator.tenmo.exception.DaoException;
 import com.techelevator.tenmo.model.Account;
 import com.techelevator.tenmo.model.Transfer;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.web.firewall.RequestRejectedException;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -14,6 +15,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
+@PreAuthorize("isAuthenticated()")
 @RequestMapping("/transfers")
 public class TransferController {
 
@@ -34,7 +36,7 @@ public class TransferController {
         return transferDao.getTransferByID(id);
     }
 
-    @RequestMapping(path = "/transfersFrom/{id}", method = RequestMethod.GET)
+    @RequestMapping(path = "/transfersFrom/{accountFromID}", method = RequestMethod.GET)
     public List<Transfer> getTransfersByAccountFrom(@PathVariable int accountFromID, @Valid@RequestBody Account myAccount){
         List<Transfer> transfers = transferDao.getTransfersByAccountFrom(accountFromID, myAccount);
         if(transfers == null){
@@ -44,7 +46,7 @@ public class TransferController {
         }
     }
 
-    @RequestMapping(path = "/transfersTo/{id}", method = RequestMethod.GET)
+    @RequestMapping(path = "/transfersTo/{accountToID}", method = RequestMethod.GET)
     public List<Transfer> getTransfersByAccountTo(@Valid@RequestBody Account myAccount, @PathVariable int accountToID){
         List<Transfer> transfers = transferDao.getTransfersByAccountTo(myAccount, accountToID);
         if(transfers == null){

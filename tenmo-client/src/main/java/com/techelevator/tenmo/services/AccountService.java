@@ -15,17 +15,13 @@ import java.util.Map;
 
 public class AccountService {
 
-    private final String baseUrl;
+    private final String baseUrl = "http://localhost:8080/accounts/";
     private final RestTemplate restTemplate = new RestTemplate();
 
     private String authToken = null;
 
     public void setAuthToken(String authToken) {
         this.authToken = authToken;
-    }
-
-    public AccountService(String baseUrl){
-        this.baseUrl = baseUrl;
     }
 
     public Account register(Account account) {
@@ -44,14 +40,13 @@ public class AccountService {
         uriVariables.put("userID", userID);
 
         try {
-            ResponseEntity<Account> account = restTemplate.exchange("http://localhost:8080/accounts/{userID}", HttpMethod.GET, makeAuthEntity(), Account.class, uriVariables);
-
-            if (account.getStatusCode().is2xxSuccessful()) {
-                if (account.getBody() != null) {
-                    balance = account.getBody().getBalance();
+            ResponseEntity<BigDecimal> balanceResponse = restTemplate.exchange(baseUrl + userID , HttpMethod.GET, makeAuthEntity(), BigDecimal.class, uriVariables);
+            if (balanceResponse.getStatusCode().is2xxSuccessful()) {
+                if (balanceResponse.getBody() != null) {
+                    balance = balanceResponse.getBody();
                 }
             } else {
-                System.err.println("Error getting account balance. HTTP Status: " + account.getStatusCode());
+                System.err.println("Error getting account balance. HTTP Status: " + balanceResponse.getStatusCode());
             }
         } catch (RestClientResponseException e) {
             System.err.println("Error getting account balance: " + e.getMessage());
