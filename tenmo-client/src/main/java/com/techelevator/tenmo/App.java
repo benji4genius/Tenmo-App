@@ -14,7 +14,7 @@ public class App {
 
     private final ConsoleService consoleService = new ConsoleService();
     private final AuthenticationService authenticationService = new AuthenticationService(API_BASE_URL);
-    private final TransferService transferService = new TransferService(API_BASE_URL);
+    private final TransferService transferService = new TransferService();
     private final AccountService accountService = new AccountService();
 
     private AuthenticatedUser currentUser;
@@ -64,6 +64,9 @@ public class App {
             consoleService.printErrorMessage();
         }else{
             accountService.setAuthToken(currentUser.getToken());
+            transferService.setAuthToken(currentUser.getToken());
+
+            accountService.setMyAccount(currentUser.getUser().getId());
         }
     }
 
@@ -97,7 +100,7 @@ public class App {
 
 	private void viewTransferHistory() {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	private void viewPendingRequests() {

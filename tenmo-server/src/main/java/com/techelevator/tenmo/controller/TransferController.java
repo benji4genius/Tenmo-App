@@ -31,15 +31,19 @@ public class TransferController {
         this.userDao = userDao;
     }
 
-    @ResponseStatus(HttpStatus.CREATED)
-    @RequestMapping(method = RequestMethod.POST)
-    public Transfer createTransfer(@Valid@RequestBody Transfer transfer) {
-        return transferDao.createTransfer(transfer);
-    }
-
     @RequestMapping(path = "/{id}", method = RequestMethod.GET)
     public Transfer getTransferByID(int id) {
         return transferDao.getTransferByID(id);
+    }
+    @ResponseStatus(HttpStatus.CREATED)
+    @RequestMapping(path = "/addTransfer", method = RequestMethod.POST)
+    public void createTransfer(@Valid@RequestBody Transfer transfer) {
+        transferDao.createTransfer(transfer);
+    }
+
+    @RequestMapping(path = "/viewMyTransfers", method = RequestMethod.GET)
+    public List<Transfer> getMyTransfers(@RequestBody Account account){
+        return transferDao.getTransfers(account);
     }
 
     @RequestMapping(path = "/transfersFrom={accountFromID}", method = RequestMethod.GET)
@@ -62,9 +66,9 @@ public class TransferController {
         }
     }
 
-    @RequestMapping(path ="/searchByStatus=", method = RequestMethod.GET)
-    public List<Transfer> getTransfersByStatus(@RequestParam int statusTypeID){
-        List<Transfer> transfers = transferDao.getTransfersByStatus(statusTypeID);
+    @RequestMapping(path ="/viewMyTransfersByStatus={statusTypeID}", method = RequestMethod.GET)
+    public List<Transfer> getTransfersByStatus(@PathVariable int statusTypeID, @RequestBody Account myAccount){
+        List<Transfer> transfers = transferDao.getTransfersByStatus(statusTypeID, myAccount);
         if(transfers == null){
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No Transfers were found");
         }else{
@@ -89,6 +93,16 @@ public class TransferController {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No Statuses were found");
         }else{
             return statuses;
+        }
+    }
+
+    @RequestMapping(path = "/listTypes", method = RequestMethod.GET)
+    public HashMap<Integer, String> getTypeMap(){
+        HashMap<Integer, String> types = transferDao.getTypes();
+        if(types == null){
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No Statuses were found");
+        }else{
+            return types;
         }
     }
 

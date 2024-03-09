@@ -47,7 +47,7 @@ public class JdbcTransferDao implements TransferDao {
     }
 
     @Override
-    public List<Transfer> getTransfers(int accountID){
+    public List<Transfer> getTransfers(Account account){
 
         List<Transfer> transfers = new ArrayList<>();
         String sql =
@@ -55,7 +55,7 @@ public class JdbcTransferDao implements TransferDao {
                 "WHERE account_from = ? OR account_to = ?;";
 
         try {
-            SqlRowSet results = jdbcTemplate.queryForRowSet(sql, accountID, accountID);
+            SqlRowSet results = jdbcTemplate.queryForRowSet(sql, account.getAccountID(), account.getAccountID());
             while (results.next()) {
                 transfers.add(mapRowToTransfer(results));
             }
@@ -70,12 +70,35 @@ public class JdbcTransferDao implements TransferDao {
     }
 
     @Override
+    public HashMap<Integer, String> getTypes() {
+        HashMap<Integer, String> types = new HashMap<>();
+        String sql =
+                "SELECT transfer_type_id, transfer_type_desc " +
+                        "FROM transfer_type " +
+                        "ORDER BY transfer_type_id;";
+        try {
+            SqlRowSet results = jdbcTemplate.queryForRowSet(sql);
+            while (results.next()) {
+                types.put(results.getInt("transfer_status_id"), results.getString("transfer_status_desc"));
+            }
+            if (types.size() != 2) {
+                throw new DaoException("Error, not enough rows found!");
+            }
+        } catch (CannotGetJdbcConnectionException e) {
+            throw new DaoException("Unable to connect to server or database", e);
+        } catch (DataIntegrityViolationException e) {
+            throw new DaoException("Data integrity violation", e);
+        }
+        return types;
+    }
+
+    @Override
     public HashMap<Integer, String> getStatuses(){
         HashMap<Integer,String> statuses = new HashMap<>();
         String sql =
                 "SELECT transfer_status_id, transfer_status_desc " +
                         "FROM transfer_status " +
-                        "ORDER BY;";
+                        "ORDER BY transfer_status_id;";
         try{
             SqlRowSet results = jdbcTemplate.queryForRowSet(sql);
             while(results.next()){
@@ -151,12 +174,11 @@ public class JdbcTransferDao implements TransferDao {
     }
 
     @Override
-    public List<Transfer> getTransfersByStatus(int statusTypeID){
+    public List<Transfer> getTransfersByStatus(int statusTypeID, Account myAccount){
         List<Transfer> transfers = new ArrayList<>();
         String sql =
                 "SELECT * FROM transfer " +
-                        "WHERE transfer_status_id = ?;";
-
+                        "WHERE transfer_status_id = ? AND account_from = ? AND account_to = ?;";
         try {
             SqlRowSet results = jdbcTemplate.queryForRowSet(sql, statusTypeID);
             while (results.next()) {

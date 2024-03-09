@@ -24,9 +24,31 @@ public class JdbcAccountDao implements AccountDao {
     }
 
     @Override
+    public Account getAccountByUserID(int userID){
+        Account myAccount = null;
+        String sql =
+                "SELECT account_id, user_id, balance " +
+                        "FROM account " +
+                        "WHERE user_id = ?;";
+        try{
+            SqlRowSet result = jdbcTemplate.queryForRowSet(sql,userID);
+            if(result.next()){
+                myAccount = mapRowToAccount(result);
+                return myAccount;
+            }else{
+                throw new DaoException("Account was not Found in Database");
+            }
+        } catch (CannotGetJdbcConnectionException e) {
+            throw new DaoException("Unable to connect to server or database", e);
+        } catch (DataIntegrityViolationException e) {
+            throw new DaoException("Data integrity violation", e);
+        }
+    }
+
+    @Override
     public BigDecimal getAccountBalanceByUserID(int userID) {
         BigDecimal accountBalance= null;
-        String sql = "SELECT account_id, user_id, balance " +
+        String sql = "SELECT balance " +
                      "FROM account "  +
                      "WHERE user_id = ?";
 
@@ -50,12 +72,11 @@ public class JdbcAccountDao implements AccountDao {
     }
 
     @Override
-    public void updateBalance(Account account) {
+    public void updateBalance(int userID, Account account) {
         BigDecimal newBalance = account.getBalance();
-
         String sql = "UPDATE account SET balance =? WHERE account_id =?;";
         try {
-            int rowsAffected = jdbcTemplate.update(sql, newBalance, account.getAccountID());
+            int rowsAffected = jdbcTemplate.update(sql, newBalance, userID);
             if (rowsAffected == 0) {
                 throw new DaoException("Zero Rows Affected. Expected at least one.");
             }

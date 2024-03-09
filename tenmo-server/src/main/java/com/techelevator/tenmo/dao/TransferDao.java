@@ -10,17 +10,19 @@ import java.util.List;
 
 public interface TransferDao {
 
-    List<Transfer> getTransfers(int accountID);
+    List<Transfer> getTransfers(Account account);
 
     Transfer getTransferByID(int id);
 
     HashMap<Integer, String> getStatuses();
 
+    HashMap<Integer, String> getTypes();
+
     List<Transfer> getTransfersByAccountFrom(int accountFromID, Account myAccount);
 
     List<Transfer> getTransfersByAccountTo (Account myAccount, int accountToID);
 
-    List<Transfer> getTransfersByStatus(int statusTypeID); //This is the subquery using status_id > status_type_descrip
+    List<Transfer> getTransfersByStatus(int statusTypeID, Account myAccount); //This is the subquery using status_id > status_type_descrip
 
     Transfer createTransfer(Transfer transfer);
 }

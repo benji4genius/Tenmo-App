@@ -25,7 +25,20 @@ public class AccountController {
         this.accountDao = accountDao;
     }
 
-    @RequestMapping(path = "/{userID}", method = RequestMethod.GET)
+    @RequestMapping(path = "/{userID}",method = RequestMethod.GET)
+    public Account getAccountByUserID(@PathVariable int userID){
+        Account myAccount = null;
+        try{
+            myAccount = accountDao.getAccountByUserID(userID);
+            return myAccount;
+        }catch (DaoException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Account not found.");
+        } catch (RequestRejectedException e){
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Integer object expected, but not found.)");
+        }
+    }
+
+    @RequestMapping(path = "/{userID}/getBalance",method = RequestMethod.GET)
     public BigDecimal getAccountBalanceByUserID(@PathVariable int userID){
         BigDecimal accountBalance = null;
         try {
@@ -33,13 +46,15 @@ public class AccountController {
             return accountBalance;
         }catch (DaoException e){
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Account not found");
+        }catch (RequestRejectedException e){
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Integer object expected, but not found.)");
         }
     }
 
-    @RequestMapping(path ="/balanceUpdate", method = RequestMethod.PUT)
-    public void updateBalance(@Valid@RequestBody Account account) {
+    @RequestMapping(path ="/{userID}/updateBalance", method = RequestMethod.PUT)
+    public void updateBalance(@PathVariable int userID, @RequestBody Account account) {
         try {
-            accountDao.updateBalance(account);
+            accountDao.updateBalance(userID, account);
         } catch (DaoException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Account not found.");
         } catch (RequestRejectedException e){
