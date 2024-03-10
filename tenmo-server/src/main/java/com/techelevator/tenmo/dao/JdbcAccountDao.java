@@ -99,7 +99,6 @@ public class JdbcAccountDao implements AccountDao {
         String sql = "SELECT balance " +
                      "FROM account "  +
                      "WHERE user_id = ?";
-
         try {
             Account account ;
             SqlRowSet result = jdbcTemplate.queryForRowSet(sql, userID);
@@ -116,7 +115,6 @@ public class JdbcAccountDao implements AccountDao {
         } catch (DataIntegrityViolationException e) {
             throw new DaoException("Data integrity violation", e);
         }
-
     }
 
     @Override

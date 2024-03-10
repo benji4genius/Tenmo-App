@@ -26,40 +26,42 @@ public class JdbcTransferDao implements TransferDao {
             "VALUES (?, ?, ?, ?, ?) ";
     private final JdbcTemplate jdbcTemplate;
 
-    public JdbcTransferDao(JdbcTemplate jdbcTemplate){
-        this.jdbcTemplate =  jdbcTemplate;
+    public JdbcTransferDao(JdbcTemplate jdbcTemplate) {
+        this.jdbcTemplate = jdbcTemplate;
     }
 
     @Override
-    public void createTransferEntry(Transfer transfer){
+    public Transfer createTransferEntry(Transfer transfer) {
+        Transfer updatedTransfer;
         String sql =
                 "INSERT INTO transfer (transfer_type_id, transfer_status_id, account_from, account_to, amount) " +
-                        "VALUES (?, ?, ?, ?, ?) ;";
+                        "VALUES (?, ?, ?, ?, ?) RETURNING transfer_id;";
         try {
-           jdbcTemplate.update(sql, transfer.getTransferTypeID(),transfer.getTransferStatusID(),
-                    transfer.getaccountFromId(), transfer.getaccountToId(), transfer.getAmount());
+            int transferID = jdbcTemplate.update(sql, transfer.getTransferTypeID(), transfer.getTransferStatusID(),
+                    transfer.getaccountFromID(), transfer.getaccountToID(), transfer.getAmount());
+            updatedTransfer = getTransferByID(transferID);
         } catch (CannotGetJdbcConnectionException e) {
             throw new DaoException("Unable to connect to server or database", e);
         } catch (DataIntegrityViolationException e) {
             throw new DaoException("Data integrity violation", e);
         }
+        return updatedTransfer;
     }
 
     @Override
-    public List<Transfer> getTransfers(int accountID){
+    public List<Transfer> getTransfers(int accountID) {
 
         List<Transfer> transfers = new ArrayList<>();
         String sql =
                 TRANSFER_SELECT +
-                "WHERE account_from = ? OR account_to = ?;";
+                        "WHERE account_from = ? OR account_to = ?;";
 
         try {
             SqlRowSet results = jdbcTemplate.queryForRowSet(sql, accountID, accountID);
             while (results.next()) {
                 transfers.add(mapRowToTransfer(results));
             }
-        }
-        catch (CannotGetJdbcConnectionException e) {
+        } catch (CannotGetJdbcConnectionException e) {
             throw new DaoException("Unable to connect to server or database", e);
         } catch (DataIntegrityViolationException e) {
             throw new DaoException("Data integrity violation", e);
@@ -68,63 +70,63 @@ public class JdbcTransferDao implements TransferDao {
 
     }
 
-/*    @Override
-    public HashMap<Integer, String> getTypes() {
-        HashMap<Integer, String> types = new HashMap<>();
-        String sql =
-                "SELECT transfer_type_id, transfer_type_desc " +
-                        "FROM transfer_type " +
-                        "ORDER BY transfer_type_id;";
-        try {
-            SqlRowSet results = jdbcTemplate.queryForRowSet(sql);
-            while (results.next()) {
-                types.put(results.getInt("transfer_status_id"), results.getString("transfer_status_desc"));
+    /*    @Override
+        public HashMap<Integer, String> getTypes() {
+            HashMap<Integer, String> types = new HashMap<>();
+            String sql =
+                    "SELECT transfer_type_id, transfer_type_desc " +
+                            "FROM transfer_type " +
+                            "ORDER BY transfer_type_id;";
+            try {
+                SqlRowSet results = jdbcTemplate.queryForRowSet(sql);
+                while (results.next()) {
+                    types.put(results.getInt("transfer_status_id"), results.getString("transfer_status_desc"));
+                }
+                if (types.size() != 2) {
+                    throw new DaoException("Error, not enough rows found!");
+                }
+            } catch (CannotGetJdbcConnectionException e) {
+                throw new DaoException("Unable to connect to server or database", e);
+            } catch (DataIntegrityViolationException e) {
+                throw new DaoException("Data integrity violation", e);
             }
-            if (types.size() != 2) {
-                throw new DaoException("Error, not enough rows found!");
-            }
-        } catch (CannotGetJdbcConnectionException e) {
-            throw new DaoException("Unable to connect to server or database", e);
-        } catch (DataIntegrityViolationException e) {
-            throw new DaoException("Data integrity violation", e);
+            return types;
         }
-        return types;
-    }
 
-    @Override
-    public HashMap<Integer, String> getStatuses(){
-        HashMap<Integer,String> statuses = new HashMap<>();
-        String sql =
-                "SELECT transfer_status_id, transfer_status_desc " +
-                        "FROM transfer_status " +
-                        "ORDER BY transfer_status_id;";
-        try{
-            SqlRowSet results = jdbcTemplate.queryForRowSet(sql);
-            while(results.next()){
-                statuses.put(results.getInt("transfer_status_id"), results.getString("transfer_status_desc"));
+        @Override
+        public HashMap<Integer, String> getStatuses(){
+            HashMap<Integer,String> statuses = new HashMap<>();
+            String sql =
+                    "SELECT transfer_status_id, transfer_status_desc " +
+                            "FROM transfer_status " +
+                            "ORDER BY transfer_status_id;";
+            try{
+                SqlRowSet results = jdbcTemplate.queryForRowSet(sql);
+                while(results.next()){
+                    statuses.put(results.getInt("transfer_status_id"), results.getString("transfer_status_desc"));
+                }
+                if(statuses.size() != 3){
+                    throw new DaoException("Error, not enough rows found!");
+                }
+            }catch (CannotGetJdbcConnectionException e) {
+                throw new DaoException("Unable to connect to server or database", e);
+            } catch (DataIntegrityViolationException e) {
+                throw new DaoException("Data integrity violation", e);
             }
-            if(statuses.size() != 3){
-                throw new DaoException("Error, not enough rows found!");
-            }
-        }catch (CannotGetJdbcConnectionException e) {
-            throw new DaoException("Unable to connect to server or database", e);
-        } catch (DataIntegrityViolationException e) {
-            throw new DaoException("Data integrity violation", e);
-        }
-        return statuses;
-    }*/
+            return statuses;
+        }*/
     @Override
-    public Transfer getTransferByID(int id){
+    public Transfer getTransferByID(int id) {
         Transfer transfer = null;
         String sql =
                 TRANSFER_SELECT +
-                "WHERE transfer_id = ?;";
+                        "WHERE transfer_id = ?;";
         try {
             SqlRowSet results = jdbcTemplate.queryForRowSet(sql, id);
             if (results.next()) {
                 transfer = mapRowToTransfer(results);
             }
-        }catch (CannotGetJdbcConnectionException e) {
+        } catch (CannotGetJdbcConnectionException e) {
             throw new DaoException("Unable to connect to server or database", e);
         } catch (DataIntegrityViolationException e) {
             throw new DaoException("Data integrity violation", e);
@@ -134,7 +136,7 @@ public class JdbcTransferDao implements TransferDao {
     }
 
     @Override
-    public List<Transfer> getTransfersByAccountFrom(int accountFromID, Account myAccount){
+    public List<Transfer> getTransfersByAccountFrom(int accountFromID, Account myAccount) {
         List<Transfer> transfersByAccountFrom = new ArrayList<>();
         String sql = TRANSFER_SELECT + "WHERE account_from = ? AND account_to = ?;";
 
@@ -143,8 +145,7 @@ public class JdbcTransferDao implements TransferDao {
             while (results.next()) {
                 transfersByAccountFrom.add(mapRowToTransfer(results));
             }
-        }
-        catch (CannotGetJdbcConnectionException e) {
+        } catch (CannotGetJdbcConnectionException e) {
             throw new DaoException("Unable to connect to server or database", e);
         } catch (DataIntegrityViolationException e) {
             throw new DaoException("Data integrity violation", e);
@@ -153,7 +154,7 @@ public class JdbcTransferDao implements TransferDao {
     }
 
     @Override
-    public List<Transfer> getTransfersByAccountTo(Account myAccount, int accountToID){
+    public List<Transfer> getTransfersByAccountTo(Account myAccount, int accountToID) {
         List<Transfer> transfersByAccountTo = new ArrayList<>();
         String sql = TRANSFER_SELECT + "WHERE account_from = ? AND account_to = ?;";
 
@@ -162,8 +163,7 @@ public class JdbcTransferDao implements TransferDao {
             while (results.next()) {
                 transfersByAccountTo.add(mapRowToTransfer(results));
             }
-        }
-        catch (CannotGetJdbcConnectionException e) {
+        } catch (CannotGetJdbcConnectionException e) {
             throw new DaoException("Unable to connect to server or database", e);
         } catch (DataIntegrityViolationException e) {
             throw new DaoException("Data integrity violation", e);
@@ -173,7 +173,7 @@ public class JdbcTransferDao implements TransferDao {
     }
 
     @Override
-    public List<Transfer> getTransfersByStatus(int statusTypeID, Account myAccount){
+    public List<Transfer> getTransfersByStatus(int statusTypeID, Account myAccount) {
         List<Transfer> transfers = new ArrayList<>();
         String sql =
                 "SELECT * FROM transfer " +
@@ -183,8 +183,7 @@ public class JdbcTransferDao implements TransferDao {
             while (results.next()) {
                 transfers.add(mapRowToTransfer(results));
             }
-        }
-        catch (CannotGetJdbcConnectionException e) {
+        } catch (CannotGetJdbcConnectionException e) {
             throw new DaoException("Unable to connect to server or database", e);
         } catch (DataIntegrityViolationException e) {
             throw new DaoException("Data integrity violation", e);
@@ -194,10 +193,10 @@ public class JdbcTransferDao implements TransferDao {
     }
 
     @Override
-    public void updateTransfer(int transferID, Transfer transfer){
+    public void updateTransfer(int transferID, Transfer transfer) {
         String sql =
                 "UPDATE transfer SET transfer_status_id = ? WHERE transfer_id = ?;";
-        try{
+        try {
             int rowsAffected = jdbcTemplate.update(sql, transfer.getTransferStatusID(), transferID);
             if (rowsAffected == 0) {
                 throw new DaoException("Zero Rows Affected. Expected at least one.");
@@ -214,8 +213,8 @@ public class JdbcTransferDao implements TransferDao {
         transfer.setTransferID(results.getInt("transfer_id"));
         transfer.setTransferTypeID(results.getInt("transfer_type_id"));
         transfer.setTransferStatusID(results.getInt("transfer_status_id"));
-        transfer.setaccountFromId(results.getInt("account_from"));
-        transfer.setaccountToId(results.getInt("account_to"));
+        transfer.setaccountFromID(results.getInt("account_from"));
+        transfer.setaccountToID(results.getInt("account_to"));
         transfer.setAmount(results.getBigDecimal("amount"));
         return transfer;
     }

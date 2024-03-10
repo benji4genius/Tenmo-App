@@ -272,6 +272,7 @@ public class TEnmoService {
 
         //Should create and add a new Transfer entry in the Database
         addTransferToDatabase(newTransfer);
+
         BigDecimal myNewBalance = myAccount.getBalance().subtract(amount);
         BigDecimal recipientNewBalance = myAccount.getBalance().add(amount);
 
@@ -279,12 +280,15 @@ public class TEnmoService {
         updateOtherUsersAccountBalance(recipientNewBalance);
     }
 
-    public void addTransferToDatabase(Transfer newTransfer) {
+    public Transfer addTransferToDatabase(Transfer newTransfer) {
+        Transfer transfer = null;
         try {
-            restTemplate.exchange(transfersUrl + "addTransfer", HttpMethod.POST, makeTransferEntity(newTransfer), Transfer.class);
+           ResponseEntity<Transfer> response= restTemplate.exchange(transfersUrl + "addTransfer", HttpMethod.POST, makeTransferEntity(newTransfer), Transfer.class);
+           transfer = response.getBody();
         } catch (RestClientResponseException | ResourceAccessException e) {
             BasicLogger.log(e.getMessage());
         }
+        return transfer;
     }
 
     public void requestMoney() {
@@ -307,7 +311,6 @@ public class TEnmoService {
         addTransferToDatabase(newTransfer);
     }
 
-
     /****************************************************************
      * STEP 5 View Only the Logged In User's Transfer History
      *  -Needs to be tested -GL
@@ -322,26 +325,30 @@ public class TEnmoService {
         System.out.println("Transfer Details");
         System.out.printf("%-15s %-10s %-25s %-25s", "ID", "From/To:", "",  "Amount");
         System.out.println("\n--------------------------------------------------------------");
+        for (User user : usersList) {
+            if(user.getId() == myAccount.getUserID()) {
+                System.out.println("Current User: " + user.getUsername());
+            }
+        }
         for (Transfer transfer : transfersList) {
             String fromTo, username;
+            searchAndSetForAccountByAcctID(transfer.getAccountFromID());
             switch (transfer.getTransferTypeID()) {
-                case 1:
-                    fromTo = "From: ";
+                case 1: //Request From
+                    fromTo = "From:";
                     for (User user : usersList) {
-                        searchAndSetForAccountByAcctID(transfer.getAccountFromID());
                         if (user.getId() == othersAccount.getUserID()) {
                             username = user.getUsername();
-                            System.out.printf("%-15s %-25s %-25s", transfer.getTransferID(), fromTo, username, "$ " + transfer.getAmount());
+                            System.out.printf("%n%-15s %-10s %-25s %-25s", transfer.getTransferID(), fromTo, username, "$ " + transfer.getAmount());
                         }
                     }
                     break;
-                case 2:
-                    fromTo = "To: ";
+                case 2: //Sent To
+                    fromTo = "To:";
                     for (User user : usersList) {
-                        searchAndSetForAccountByAcctID(transfer.getAccountToID());
                         if (user.getId() == othersAccount.getUserID()) {
                             username = user.getUsername();
-                            System.out.printf("%-15s %-10s %-25s %-25s", transfer.getTransferID(), fromTo, username, "$ " + transfer.getAmount());
+                            System.out.printf("%n%-15s %-10s %-25s %-25s", transfer.getTransferID(), fromTo, username, "$ " + transfer.getAmount());
                         }
                     }
                     break;
