@@ -32,17 +32,17 @@ public class JdbcTransferDao implements TransferDao {
 
     @Override
     public void createTransferEntry(Transfer transfer){
-        Transfer newTransfer = null;
-        String sql = INSERT_SELECT + "RETURNING transfer_id;";
+        String sql =
+                "INSERT INTO transfer (transfer_type_id, transfer_status_id, account_from, account_to, amount) " +
+                        "VALUES (?, ?, ?, ?, ?) ;";
         try {
-           jdbcTemplate.update(sql,int.class, transfer.getTransferTypeID(),transfer.getTransferStatusID(),
+           jdbcTemplate.update(sql, transfer.getTransferTypeID(),transfer.getTransferStatusID(),
                     transfer.getaccountFromId(), transfer.getaccountToId(), transfer.getAmount());
         } catch (CannotGetJdbcConnectionException e) {
             throw new DaoException("Unable to connect to server or database", e);
         } catch (DataIntegrityViolationException e) {
             throw new DaoException("Data integrity violation", e);
         }
-
     }
 
     @Override

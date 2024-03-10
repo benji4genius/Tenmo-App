@@ -171,8 +171,7 @@ public class TEnmoService {
             ResponseEntity<Account> accountResponse = restTemplate.exchange(accountsUrl + accountID, HttpMethod.GET, makeAuthEntity(), Account.class);
             this.othersAccount = accountResponse.getBody();
         } catch (RestClientResponseException e) {
-            System.err.println("Error getting content! Http Status Code: " + e.getStatusText());
-            e.printStackTrace();
+            System.err.println("Error getting content! Http Status Code: " + e.getRawStatusCode());
         }
     }
 
@@ -282,7 +281,7 @@ public class TEnmoService {
 
     public void addTransferToDatabase(Transfer newTransfer) {
         try {
-            restTemplate.exchange(transfersUrl, HttpMethod.POST, makeTransferEntity(newTransfer), Transfer.class);
+            restTemplate.exchange(transfersUrl + "addTransfer", HttpMethod.POST, makeTransferEntity(newTransfer), Transfer.class);
         } catch (RestClientResponseException | ResourceAccessException e) {
             BasicLogger.log(e.getMessage());
         }
@@ -321,7 +320,7 @@ public class TEnmoService {
         setTransfersList();
         System.out.println("--------------------------------------------------------------");
         System.out.println("Transfer Details");
-        System.out.printf("%-15s %-25s %-25s", "ID", "From/To:",  "Amount");
+        System.out.printf("%-15s %-10s %-25s %-25s", "ID", "From/To:", "",  "Amount");
         System.out.println("\n--------------------------------------------------------------");
         for (Transfer transfer : transfersList) {
             String fromTo, username;
@@ -332,7 +331,7 @@ public class TEnmoService {
                         searchAndSetForAccountByAcctID(transfer.getAccountFromID());
                         if (user.getId() == othersAccount.getUserID()) {
                             username = user.getUsername();
-                            System.out.printf("%-15s %-25s %-25s,", transfer.getTransferID(), fromTo, username, "$ " + transfer.getAmount());
+                            System.out.printf("%-15s %-25s %-25s", transfer.getTransferID(), fromTo, username, "$ " + transfer.getAmount());
                         }
                     }
                     break;
@@ -342,7 +341,7 @@ public class TEnmoService {
                         searchAndSetForAccountByAcctID(transfer.getAccountToID());
                         if (user.getId() == othersAccount.getUserID()) {
                             username = user.getUsername();
-                            System.out.printf("%-15s %-10s -%25s %-35s", transfer.getTransferID(), fromTo, username, "$ " + transfer.getAmount());
+                            System.out.printf("%-15s %-10s %-25s %-25s", transfer.getTransferID(), fromTo, username, "$ " + transfer.getAmount());
                         }
                     }
                     break;
@@ -436,7 +435,7 @@ public class TEnmoService {
         System.out.println("------------------------------------------------");
         System.out.println("Pending Transfers");
         System.out.printf("%-10s %-25s %-25s", "ID", "To", "Amount");
-        System.out.println("------------------------------------------------");
+        System.out.println("\n------------------------------------------------");
         for (Transfer transfer : pendingTransfers) {
             System.out.printf("%-10s %-25s %-25s", transfer.getTransferID(), findUsernameByAccountID(transfer.getAccountFromID()), "$ " + transfer.getAmount());
         }

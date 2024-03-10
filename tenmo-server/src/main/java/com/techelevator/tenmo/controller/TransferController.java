@@ -37,7 +37,7 @@ public class TransferController {
     }
     @ResponseStatus(HttpStatus.CREATED)
     @RequestMapping(path = "/addTransfer", method = RequestMethod.POST)
-    public void createTransfer(@Valid@RequestBody Transfer transfer) {
+    public void createTransfer(@RequestBody Transfer transfer) {
         transferDao.createTransferEntry(transfer);
     }
 

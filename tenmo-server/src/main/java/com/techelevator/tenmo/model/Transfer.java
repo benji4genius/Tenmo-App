@@ -7,10 +7,9 @@ import java.math.BigDecimal;
 public class Transfer {
 
     private int transferID;
-    @NotBlank(message = "Field cannot be Blank!")
+
     private int transferTypeID, transferStatusID;
 
-    @NotBlank(message = "Field cannot be Blank!")
     private int accountFromId, accountToId;
 
     private BigDecimal amount;
