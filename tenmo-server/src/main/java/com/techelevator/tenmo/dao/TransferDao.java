@@ -14,9 +14,9 @@ public interface TransferDao {
 
     Transfer getTransferByID(int id);
 
-    HashMap<Integer, String> getStatuses();
+/*    HashMap<Integer, String> getStatuses();
 
-    HashMap<Integer, String> getTypes();
+    HashMap<Integer, String> getTypes();*/
 
     List<Transfer> getTransfersByAccountFrom(int accountFromID, Account myAccount);
 
@@ -25,4 +25,7 @@ public interface TransferDao {
     List<Transfer> getTransfersByStatus(int statusTypeID, Account myAccount); //This is the subquery using status_id > status_type_descrip
 
     Transfer createTransfer(Transfer transfer);
+
+    void updateTransfer(int transferID, Transfer transfer);
+
 }

@@ -38,4 +38,12 @@ public class Account {
     public void setBalance(BigDecimal balance) {
         this.balance = balance;
     }
+
+    public boolean equals(Account account) {
+        if(userID == account.getUserID()){
+            return true;
+        }else{
+            return false;
+        }
+    }
 }

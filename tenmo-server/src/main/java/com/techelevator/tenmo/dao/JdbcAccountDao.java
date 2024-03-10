@@ -2,6 +2,7 @@ package com.techelevator.tenmo.dao;
 
 import com.techelevator.tenmo.exception.DaoException;
 import com.techelevator.tenmo.model.Account;
+import com.techelevator.tenmo.model.User;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.jdbc.CannotGetJdbcConnectionException;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -21,6 +22,53 @@ public class JdbcAccountDao implements AccountDao {
 
     public JdbcAccountDao(JdbcTemplate jdbcTemplate){
         this.jdbcTemplate = jdbcTemplate;
+    }
+    @Override
+    public User getUserByAccountID(int accountID){
+        User user = null;
+        String sql =
+                "SELECT user_id, username " +
+                        "FROM tenmo_user " +
+                        "WHERE user_id = ( " +
+                            "SELECT user_id " +
+                            "FROM account " +
+                            "WHERE account_id = ?);";
+        try{
+            SqlRowSet result = jdbcTemplate.queryForRowSet(sql,accountID);
+            if(result.next()){
+                user = mapRowToUser(result);
+                return user;
+            }else{
+                throw new DaoException("Account was not Found in Database");
+            }
+        } catch (CannotGetJdbcConnectionException e) {
+            throw new DaoException("Unable to connect to server or database", e);
+        } catch (DataIntegrityViolationException e) {
+            throw new DaoException("Data integrity violation", e);
+        }
+
+    }
+
+    @Override
+    public Account getAccountByID(int accountID){
+        Account account = null;
+        String sql =
+                "SELECT account_id, user_id, balance " +
+                        "FROM account " +
+                        "WHERE account_id = ?;";
+        try{
+            SqlRowSet result = jdbcTemplate.queryForRowSet(sql,accountID);
+            if(result.next()){
+                account = mapRowToAccount(result);
+                return account;
+            }else{
+                throw new DaoException("Account was not Found in Database");
+            }
+        } catch (CannotGetJdbcConnectionException e) {
+            throw new DaoException("Unable to connect to server or database", e);
+        } catch (DataIntegrityViolationException e) {
+            throw new DaoException("Data integrity violation", e);
+        }
     }
 
     @Override
@@ -95,6 +143,16 @@ public class JdbcAccountDao implements AccountDao {
         account.setBalance(results.getBigDecimal("balance"));
 
         return account;
+    }
+
+    private User mapRowToUser(SqlRowSet rs) {
+        User user = new User();
+        user.setId(rs.getInt("user_id"));
+        user.setUsername(rs.getString("username"));
+        user.setPassword(rs.getString("password_hash"));
+        user.setActivated(true);
+        user.setAuthorities("USER");
+        return user;
     }
 }
 

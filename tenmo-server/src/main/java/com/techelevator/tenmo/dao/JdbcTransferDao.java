@@ -69,7 +69,7 @@ public class JdbcTransferDao implements TransferDao {
 
     }
 
-    @Override
+/*    @Override
     public HashMap<Integer, String> getTypes() {
         HashMap<Integer, String> types = new HashMap<>();
         String sql =
@@ -113,7 +113,7 @@ public class JdbcTransferDao implements TransferDao {
             throw new DaoException("Data integrity violation", e);
         }
         return statuses;
-    }
+    }*/
     @Override
     public Transfer getTransferByID(int id){
         Transfer transfer = null;
@@ -194,6 +194,21 @@ public class JdbcTransferDao implements TransferDao {
 
     }
 
+    @Override
+    public void updateTransfer(int transferID, Transfer transfer){
+        String sql =
+                "UPDATE transfer SET transfer_status_id = ? WHERE transfer_id = ?;";
+        try{
+            int rowsAffected = jdbcTemplate.update(sql, transfer.getTransferStatusID(), transferID);
+            if (rowsAffected == 0) {
+                throw new DaoException("Zero Rows Affected. Expected at least one.");
+            }
+        } catch (CannotGetJdbcConnectionException e) {
+            throw new DaoException("Unable to connect to server or database", e);
+        } catch (DataIntegrityViolationException e) {
+            throw new DaoException("Data integrity violation", e);
+        }
+    }
 
     private Transfer mapRowToTransfer(SqlRowSet results) {
         Transfer transfer = new Transfer();

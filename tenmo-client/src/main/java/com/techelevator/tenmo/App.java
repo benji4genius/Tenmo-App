@@ -1,12 +1,11 @@
 package com.techelevator.tenmo;
 
-import com.techelevator.tenmo.model.Account;
 import com.techelevator.tenmo.model.AuthenticatedUser;
+import com.techelevator.tenmo.model.User;
 import com.techelevator.tenmo.model.UserCredentials;
-import com.techelevator.tenmo.services.AccountService;
 import com.techelevator.tenmo.services.AuthenticationService;
 import com.techelevator.tenmo.services.ConsoleService;
-import com.techelevator.tenmo.services.TransferService;
+import com.techelevator.tenmo.services.TEnmoService;
 
 public class App {
 
@@ -14,9 +13,7 @@ public class App {
 
     private final ConsoleService consoleService = new ConsoleService();
     private final AuthenticationService authenticationService = new AuthenticationService(API_BASE_URL);
-    private final TransferService transferService = new TransferService();
-    private final AccountService accountService = new AccountService();
-
+    private final TEnmoService TEnmoService = new TEnmoService();
     private AuthenticatedUser currentUser;
 
     public static void main(String[] args) {
@@ -63,10 +60,10 @@ public class App {
         if (currentUser == null) {
             consoleService.printErrorMessage();
         }else{
-            accountService.setAuthToken(currentUser.getToken());
-            transferService.setAuthToken(currentUser.getToken());
-
-            accountService.setMyAccount(currentUser.getUser().getId());
+            TEnmoService.setAuthToken(currentUser.getToken());
+            TEnmoService.setMyAccount(currentUser.getUser().getId());
+            User user = currentUser.getUser();
+            TEnmoService.setUsersList(user);
         }
     }
 
@@ -95,27 +92,27 @@ public class App {
     }
 
 	private void viewCurrentBalance() {
-        System.out.println("Your current account balance is: $" + accountService.getAccountBalanceByUserID(currentUser.getUser().getId()));
+        System.out.println("Your current account balance is: $" + TEnmoService.getMyAccountBalance());
 	}
 
 	private void viewTransferHistory() {
 		// TODO Auto-generated method stub
-
+        TEnmoService.viewMyTransfers();
 	}
 
 	private void viewPendingRequests() {
 		// TODO Auto-generated method stub
-		
+		TEnmoService.viewMyPendingTransfers();
 	}
 
 	private void sendBucks() {
 		// TODO Auto-generated method stub
-		
+		TEnmoService.sendMoney();
 	}
 
 	private void requestBucks() {
 		// TODO Auto-generated method stub
-		
+		TEnmoService.requestMoney();
 	}
 
 }

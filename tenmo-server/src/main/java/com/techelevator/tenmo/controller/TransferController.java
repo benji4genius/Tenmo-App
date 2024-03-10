@@ -76,7 +76,18 @@ public class TransferController {
         }
     }
 
-    @RequestMapping(path="/listUsers", method = RequestMethod.GET)
+    @RequestMapping(path = "/{id}/updateTransfer", method = RequestMethod.PUT)
+    public void updateTransfer(@PathVariable int id, @RequestBody Transfer transfer){
+        try {
+            transferDao.updateTransfer(id, transfer);
+        } catch (DaoException e) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Transfer not found.");
+        } catch (RequestRejectedException e){
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Transfer Entity was not Valid (contains null values)");
+        }
+    }
+
+  @RequestMapping(path="/listUsers", method = RequestMethod.GET)
     public List<User> getUsers(@RequestBody User user){
         List<User> users = userDao.getUsers(user);
         if(users == null){
@@ -85,7 +96,7 @@ public class TransferController {
             return users;
         }
     }
-
+/*
     @RequestMapping(path = "/listStatuses", method = RequestMethod.GET)
     public HashMap<Integer, String> getStatusesMap(){
         HashMap<Integer, String> statuses = transferDao.getStatuses();
@@ -104,7 +115,7 @@ public class TransferController {
         }else{
             return types;
         }
-    }
+    }*/
 
 }
 
