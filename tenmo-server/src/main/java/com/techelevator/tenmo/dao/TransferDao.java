@@ -10,7 +10,7 @@ import java.util.List;
 
 public interface TransferDao {
 
-    List<Transfer> getTransfers(Account account);
+    List<Transfer> getTransfers(int accountID);
 
     Transfer getTransferByID(int id);
 
@@ -24,7 +24,7 @@ public interface TransferDao {
 
     List<Transfer> getTransfersByStatus(int statusTypeID, Account myAccount); //This is the subquery using status_id > status_type_descrip
 
-    Transfer createTransfer(Transfer transfer);
+    void createTransferEntry(Transfer transfer);
 
     void updateTransfer(int transferID, Transfer transfer);
 

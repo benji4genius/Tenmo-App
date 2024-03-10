@@ -120,11 +120,11 @@ public class JdbcAccountDao implements AccountDao {
     }
 
     @Override
-    public void updateBalance(int userID, Account account) {
+    public void updateBalance(int accountID, Account account) {
         BigDecimal newBalance = account.getBalance();
         String sql = "UPDATE account SET balance =? WHERE account_id =?;";
         try {
-            int rowsAffected = jdbcTemplate.update(sql, newBalance, userID);
+            int rowsAffected = jdbcTemplate.update(sql, newBalance, accountID);
             if (rowsAffected == 0) {
                 throw new DaoException("Zero Rows Affected. Expected at least one.");
             }

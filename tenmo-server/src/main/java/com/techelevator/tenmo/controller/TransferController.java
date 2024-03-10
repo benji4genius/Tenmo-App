@@ -38,12 +38,17 @@ public class TransferController {
     @ResponseStatus(HttpStatus.CREATED)
     @RequestMapping(path = "/addTransfer", method = RequestMethod.POST)
     public void createTransfer(@Valid@RequestBody Transfer transfer) {
-        transferDao.createTransfer(transfer);
+        transferDao.createTransferEntry(transfer);
     }
 
-    @RequestMapping(path = "/viewMyTransfers", method = RequestMethod.GET)
-    public List<Transfer> getMyTransfers(@RequestBody Account account){
-        return transferDao.getTransfers(account);
+    @RequestMapping(path = "/{accountID}/viewMyTransfers", method = RequestMethod.GET)
+    public List<Transfer> getMyTransfers(@PathVariable int accountID){
+        List<Transfer> transfers = transferDao.getTransfers(accountID);
+        if(transfers == null){
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No Users were found");
+        }else{
+            return transfers;
+        }
     }
 
     @RequestMapping(path = "/transfersFrom={accountFromID}", method = RequestMethod.GET)
@@ -87,9 +92,10 @@ public class TransferController {
         }
     }
 
-  @RequestMapping(path="/listUsers", method = RequestMethod.GET)
-    public List<User> getUsers(@RequestBody User user){
-        List<User> users = userDao.getUsers(user);
+    @PreAuthorize("permitAll")
+    @RequestMapping(path="/listUsers", method = RequestMethod.GET)
+    public List<User> getUsers(){
+        List<User> users = userDao.getUsers();
         if(users == null){
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No Users were found");
         }else{

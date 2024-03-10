@@ -6,15 +6,16 @@ import java.math.BigDecimal;
 
 public class Transfer {
 
-    @NotNull(message = "Field cannot be Null!")
-    private int transferID, transferTypeID, transferStatusID;
+    private int transferID;
+    @NotBlank(message = "Field cannot be Blank!")
+    private int transferTypeID, transferStatusID;
 
-    @NotBlank(message = "Field cannot Blank!")
+    @NotBlank(message = "Field cannot be Blank!")
     private int accountFromId, accountToId;
 
     private BigDecimal amount;
-    
-    public Transfer(int transferID, int transferTypeID, int transferStatusID, int accountFromId, int accountToId, BigDecimal amount){
+
+    public Transfer(int transferID, int transferTypeID, int transferStatusID, int accountFromId, int accountToId, BigDecimal amount) {
         this.transferID = transferID;
         this.transferTypeID = transferTypeID;
         this.transferStatusID = transferStatusID;

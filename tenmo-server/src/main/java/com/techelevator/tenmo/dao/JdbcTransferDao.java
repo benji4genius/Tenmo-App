@@ -19,11 +19,11 @@ import java.util.List;
 @Component
 public class JdbcTransferDao implements TransferDao {
 
-    private final String TRANSFER_SELECT = "SELECT transfer_id, transfer_type_id, transfer_status_id, account_from, account_to, amount" +
-            "FROM transfer";
-    private final String INSERT_SELECT = "INSERT INTO transfer(" +
-            "transfer_type_id, transfer_status_id, account_from, account_to, amount)" +
-            "VALUES (?, ?, ?, ?, ?)";
+    private final String TRANSFER_SELECT = "SELECT transfer_id, transfer_type_id, transfer_status_id, account_from, account_to, amount " +
+            "FROM transfer ";
+    private final String INSERT_SELECT = "INSERT INTO transfer( " +
+            "transfer_type_id, transfer_status_id, account_from, account_to, amount) " +
+            "VALUES (?, ?, ?, ?, ?) ";
     private final JdbcTemplate jdbcTemplate;
 
     public JdbcTransferDao(JdbcTemplate jdbcTemplate){
@@ -31,23 +31,22 @@ public class JdbcTransferDao implements TransferDao {
     }
 
     @Override
-    public Transfer createTransfer(Transfer transfer){
+    public void createTransferEntry(Transfer transfer){
         Transfer newTransfer = null;
         String sql = INSERT_SELECT + "RETURNING transfer_id;";
         try {
-            int newTransferID = jdbcTemplate.queryForObject(sql,int.class, transfer.getTransferTypeID(),transfer.getTransferStatusID(),
+           jdbcTemplate.update(sql,int.class, transfer.getTransferTypeID(),transfer.getTransferStatusID(),
                     transfer.getaccountFromId(), transfer.getaccountToId(), transfer.getAmount());
-            newTransfer = getTransferByID(newTransferID);
         } catch (CannotGetJdbcConnectionException e) {
             throw new DaoException("Unable to connect to server or database", e);
         } catch (DataIntegrityViolationException e) {
             throw new DaoException("Data integrity violation", e);
         }
-        return newTransfer;
+
     }
 
     @Override
-    public List<Transfer> getTransfers(Account account){
+    public List<Transfer> getTransfers(int accountID){
 
         List<Transfer> transfers = new ArrayList<>();
         String sql =
@@ -55,7 +54,7 @@ public class JdbcTransferDao implements TransferDao {
                 "WHERE account_from = ? OR account_to = ?;";
 
         try {
-            SqlRowSet results = jdbcTemplate.queryForRowSet(sql, account.getAccountID(), account.getAccountID());
+            SqlRowSet results = jdbcTemplate.queryForRowSet(sql, accountID, accountID);
             while (results.next()) {
                 transfers.add(mapRowToTransfer(results));
             }

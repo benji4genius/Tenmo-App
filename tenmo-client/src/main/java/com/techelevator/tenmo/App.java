@@ -62,8 +62,7 @@ public class App {
         }else{
             TEnmoService.setAuthToken(currentUser.getToken());
             TEnmoService.setMyAccount(currentUser.getUser().getId());
-            User user = currentUser.getUser();
-            TEnmoService.setUsersList(user);
+            TEnmoService.setUsersList();
         }
     }
 

@@ -78,10 +78,10 @@ public class AccountController {
         }
     }
 
-    @RequestMapping(path ="/{userID}/updateBalance", method = RequestMethod.PUT)
-    public void updateBalance(@PathVariable int userID, @RequestBody Account account) {
+    @RequestMapping(path ="/{accountID}/updateBalance", method = RequestMethod.PUT)
+    public void updateBalance(@PathVariable int accountID, @RequestBody Account account) {
         try {
-            accountDao.updateBalance(userID, account);
+            accountDao.updateBalance(accountID, account);
         } catch (DaoException e) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Account not found.");
         } catch (RequestRejectedException e){

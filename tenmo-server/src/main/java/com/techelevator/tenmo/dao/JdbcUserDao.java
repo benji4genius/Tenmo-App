@@ -55,25 +55,6 @@ public class JdbcUserDao implements UserDao {
         return users;
     }
 
-    //Newly Added, made to not show the currentUser in the list as they are not supposed to send money to themselves
-    @Override
-    public List<User> getUsers(User currentUser) {
-        List<User> users = new ArrayList<>();
-        String sql = "SELECT user_id, username FROM tenmo_user ORDER BY user_id;";
-        try {
-            SqlRowSet results = jdbcTemplate.queryForRowSet(sql);
-            while (results.next()) {
-                User user = mapRowToUser(results);
-                if(user.getId() != currentUser.getId()) {
-                    users.add(user);
-                }
-            }
-        } catch (CannotGetJdbcConnectionException e) {
-            throw new DaoException("Unable to connect to server or database", e);
-        }
-        return users;
-    }
-
     @Override
     public User getUserByUsername(String username) {
         if (username == null) throw new IllegalArgumentException("Username cannot be null");

@@ -9,8 +9,6 @@ public interface UserDao {
 
     List<User> getUsers();
 
-    List<User> getUsers(User currentUser) ;
-
     User getUserById(int id);
 
     User getUserByUsername(String username);

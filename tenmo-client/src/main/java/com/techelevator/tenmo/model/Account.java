@@ -5,9 +5,7 @@ import java.math.BigDecimal;
 public class Account {
 
     private int accountID, userID;
-
     private BigDecimal balance;
-
     public Account(){}
     public Account(int accountID, int userID, BigDecimal balance){
         this.accountID = accountID;

@@ -1,7 +1,6 @@
 package com.techelevator.tenmo.services;
 
 import com.techelevator.tenmo.model.Account;
-import com.techelevator.tenmo.model.AuthenticatedUser;
 import com.techelevator.tenmo.model.Transfer;
 import com.techelevator.tenmo.model.User;
 import com.techelevator.util.BasicLogger;
@@ -19,17 +18,16 @@ public class TEnmoService {
     private final String accountsUrl = "http://localhost:8080/accounts/";
     private final RestTemplate restTemplate = new RestTemplate();
     private final Scanner sc = new Scanner(System.in);
-    private Transfer newTransferEntry;
     private Account myAccount, othersAccount;
     private User[] usersList;
     private Transfer[] transfersList;
     private String authToken;
 
-    public void setUsersList(User user) {
+    public void setUsersList() {
         try {
             ResponseEntity<User[]> response =
                     restTemplate.exchange(
-                            transfersUrl + "listUsers", HttpMethod.GET, makeUserEntity(user), User[].class);
+                            transfersUrl + "/listUsers", HttpMethod.GET, makeAuthEntity(), User[].class);
             if (response.getStatusCode().is2xxSuccessful()) {
                 if (response.getBody() != null) {
                     usersList = response.getBody();
@@ -38,8 +36,8 @@ public class TEnmoService {
                 System.err.println("Error getting content! Http Status Code: " + response.getStatusCode());
             }
         } catch (RestClientResponseException e) {
-            System.err.println("Error getting content! Http Status Code: " + e.getStatusText());
-            e.printStackTrace();
+            System.err.println("Error getting content! Http Status Code: " + e.getRawStatusCode());
+            System.err.println(e.getStatusText());
         }
     }
 
@@ -55,12 +53,19 @@ public class TEnmoService {
 
     public void setTransfersList(){
         try {
-            ResponseEntity<Transfer[]> myTransfers =
-                    restTemplate.exchange(transfersUrl + "viewMyTransfers", HttpMethod.GET,
-                            makeAccountEntity(myAccount), Transfer[].class);
-            transfersList = myTransfers.getBody();
-        } catch (RestClientResponseException | ResourceAccessException e) {
-            BasicLogger.log(e.getMessage());
+            ResponseEntity<Transfer[]> response =
+                    restTemplate.exchange(
+                            transfersUrl + myAccount.getAccountID() +"/viewMyTransfers", HttpMethod.GET, makeAuthEntity(), Transfer[].class);
+            if (response.getStatusCode().is2xxSuccessful()) {
+                if (response.getBody() != null) {
+                    transfersList = response.getBody();
+                }
+            } else {
+                System.err.println("Error getting content! Http Status Code: " + response.getStatusCode());
+            }
+        } catch (RestClientResponseException e) {
+            System.err.println("Error getting content! Http Status Code: " + e.getRawStatusCode());
+            System.err.println(e.getStatusText());
         }
     }
 
@@ -128,7 +133,7 @@ public class TEnmoService {
         myAccount.setBalance(newBalance);
         try {
             restTemplate.put(
-                    accountsUrl + myAccount.getUserID() + "/updateBalance", makeAccountEntity(myAccount));
+                    accountsUrl + myAccount.getAccountID() + "/updateBalance", makeAccountEntity(myAccount));
         } catch (ResourceAccessException e) {
             System.out.println(e.getMessage());
         } catch (RestClientResponseException e) {
@@ -176,7 +181,7 @@ public class TEnmoService {
         othersAccount.setBalance(newBalance);
         try {
             restTemplate.put(
-                    accountsUrl + othersAccount.getUserID() + "/updateBalance", makeAccountEntity(othersAccount));
+                    accountsUrl + othersAccount.getAccountID() + "/updateBalance", makeAccountEntity(othersAccount));
         } catch (ResourceAccessException e) {
             System.out.println(e.getMessage());
         } catch (RestClientResponseException e) {
@@ -223,14 +228,6 @@ public class TEnmoService {
      *      -Needs testing - GL
      * **************************************************************************************/
 
-    public void createNewTransfer(int accountFromID, int accountToID, BigDecimal amount, int transferStatusID, int transferTypeID) {
-        newTransferEntry.setAccountFromID(accountFromID);
-        newTransferEntry.setAccountToID(accountToID);
-        newTransferEntry.setAmount(amount);
-        newTransferEntry.setTransferStatusID(transferStatusID);
-        newTransferEntry.setTransferTypeID(transferTypeID);
-    }
-
     public void sendMoney() {
         int transferStatusID, transferTypeID;
         transferStatusID = 2; //Approved
@@ -261,15 +258,21 @@ public class TEnmoService {
             System.out.println("*****************************************************************\n");
 
             System.out.println("Enter ID of user you are sending to (0 to cancel):");
+            searchAndSetForAccountByUserID(Integer.parseInt(sc.nextLine()));
+            while (othersAccount.equals(myAccount)) {
+                System.out.println("Error! You CANNOT send money to yourself!");
+                System.out.println("Enter ID of user you are sending to (0 to cancel):");
+                searchAndSetForAccountByUserID(Integer.parseInt(sc.nextLine()));
+            }
             System.out.println("Enter amount:");
             amount = BigDecimal.valueOf(Double.parseDouble(sc.nextLine()));
             chkAmountGreaterThanMyAcctBalance = amount.compareTo(myAccount.getBalance());
         }
         //                   Senders AcctID   |  Rcpt AcctID  |  $  |  Approve, Deny, Pending  |   Receive(1) or Send(2)
-        createNewTransfer(myAccount.getAccountID(), othersAccount.getAccountID(), amount, transferStatusID, transferTypeID);
+        Transfer newTransfer = new Transfer(myAccount.getAccountID(), othersAccount.getAccountID(), transferStatusID, transferTypeID, amount);
 
         //Should create and add a new Transfer entry in the Database
-        addTransferToDatabase();
+        addTransferToDatabase(newTransfer);
         BigDecimal myNewBalance = myAccount.getBalance().subtract(amount);
         BigDecimal recipientNewBalance = myAccount.getBalance().add(amount);
 
@@ -277,16 +280,16 @@ public class TEnmoService {
         updateOtherUsersAccountBalance(recipientNewBalance);
     }
 
-    public void addTransferToDatabase() {
+    public void addTransferToDatabase(Transfer newTransfer) {
         try {
-            restTemplate.exchange(transfersUrl, HttpMethod.POST, makeTransferEntity(newTransferEntry), Transfer.class);
+            restTemplate.exchange(transfersUrl, HttpMethod.POST, makeTransferEntity(newTransfer), Transfer.class);
         } catch (RestClientResponseException | ResourceAccessException e) {
             BasicLogger.log(e.getMessage());
         }
     }
 
     public void requestMoney() {
-        int accountToID, transferStatusID, transferTypeID, receiversUserID;
+        int  transferStatusID, transferTypeID;
         BigDecimal amount;
         transferStatusID = 1; //Pending
         transferTypeID = 1; //Request
@@ -299,10 +302,10 @@ public class TEnmoService {
         amount = BigDecimal.valueOf(Double.parseDouble(sc.nextLine()));
 
         //                   Senders AcctID   |  Rcpt AcctID  |  $  |  Approve, Deny, Pending  |   Receive(1) or Send(2)
-        createNewTransfer(othersAccount.getAccountID(), myAccount.getAccountID(), amount, transferStatusID, transferTypeID);
+        Transfer newTransfer = new Transfer(myAccount.getAccountID(), othersAccount.getAccountID(), transferStatusID, transferTypeID, amount);
 
         //Should create and add a new Transfer entry in the Database
-        addTransferToDatabase();
+        addTransferToDatabase(newTransfer);
     }
 
 
