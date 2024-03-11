@@ -22,7 +22,7 @@ public interface TransferDao {
 
     List<Transfer> getTransfersByAccountTo (Account myAccount, int accountToID);
 
-    List<Transfer> getTransfersByStatus(int statusTypeID, Account myAccount); //This is the subquery using status_id > status_type_descrip
+    List<Transfer> getTransfersByStatus(int statusTypeID,  int accountID); //This is the subquery using status_id > status_type_descrip
 
     Transfer createTransferEntry(Transfer transfer);
 

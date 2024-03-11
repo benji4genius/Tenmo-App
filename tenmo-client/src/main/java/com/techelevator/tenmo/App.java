@@ -96,12 +96,12 @@ public class App {
 
 	private void viewTransferHistory() {
 		// TODO Auto-generated method stub
-        TEnmoService.viewMyTransfers();
+        TEnmoService.viewTransferInfoByID();
 	}
 
 	private void viewPendingRequests() {
 		// TODO Auto-generated method stub
-		TEnmoService.viewMyPendingTransfers();
+		TEnmoService.updateTransferStatus();
 	}
 
 	private void sendBucks() {

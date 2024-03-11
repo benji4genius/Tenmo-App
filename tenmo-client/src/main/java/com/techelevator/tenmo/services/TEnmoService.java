@@ -20,7 +20,7 @@ public class TEnmoService {
     private final Scanner sc = new Scanner(System.in);
     private Account myAccount, othersAccount;
     private User[] usersList;
-    private Transfer[] transfersList;
+    private Transfer[] transfersList, pendingTransfers;
     private String authToken;
 
     public void setUsersList() {
@@ -51,11 +51,11 @@ public class TEnmoService {
         System.out.println("-------------------------------------------");
     }
 
-    public void setTransfersList(){
+    public void setTransfersList() {
         try {
             ResponseEntity<Transfer[]> response =
                     restTemplate.exchange(
-                            transfersUrl + myAccount.getAccountID() +"/viewMyTransfers", HttpMethod.GET, makeAuthEntity(), Transfer[].class);
+                            transfersUrl + myAccount.getAccountID() + "/viewMyTransfers", HttpMethod.GET, makeAuthEntity(), Transfer[].class);
             if (response.getStatusCode().is2xxSuccessful()) {
                 if (response.getBody() != null) {
                     transfersList = response.getBody();
@@ -156,13 +156,13 @@ public class TEnmoService {
      **********************************************/
     // SEARCHES FOR AN ACCOUNT BY USER ID | Used when Sending Money to find the Recipient's Account
     public void searchAndSetForAccountByUserID(int userID) {
-            try {
-                ResponseEntity<Account> accountResponse = restTemplate.exchange(accountsUrl + "user/" + userID, HttpMethod.GET, makeAuthEntity(), Account.class);
-                this.othersAccount = accountResponse.getBody();
-            } catch (RestClientResponseException e) {
-                System.err.println("Error getting content! Http Status Code: " + e.getStatusText());
-                e.printStackTrace();
-            }
+        try {
+            ResponseEntity<Account> accountResponse = restTemplate.exchange(accountsUrl + "user/" + userID, HttpMethod.GET, makeAuthEntity(), Account.class);
+            this.othersAccount = accountResponse.getBody();
+        } catch (RestClientResponseException e) {
+            System.err.println("Error getting content! Http Status Code: " + e.getStatusText());
+            e.printStackTrace();
+        }
     }
 
     // SEARCHES FOR AN ACCOUNT BY THE ACCOUNT ID
@@ -239,8 +239,8 @@ public class TEnmoService {
         //NEEDS DEFENSIVE PROGRAMMING HERE (loops, try-catch, etc) TO STOP USER FROM DOING INVALID INPUTS -GL
         System.out.println("Enter ID of user you are sending to (0 to cancel):");
         searchAndSetForAccountByUserID(Integer.parseInt(sc.nextLine()));
-        while (othersAccount.equals(myAccount)) {
-            System.out.println("Error! You CANNOT send money to yourself!");
+        while (othersAccount.equals(myAccount) || othersAccount == null) {
+            System.out.println("Error! You CANNOT send money to yourself! & Select a VALID account!");
             System.out.println("Enter ID of user you are sending to (0 to cancel):");
             searchAndSetForAccountByUserID(Integer.parseInt(sc.nextLine()));
         }
@@ -283,8 +283,8 @@ public class TEnmoService {
     public Transfer addTransferToDatabase(Transfer newTransfer) {
         Transfer transfer = null;
         try {
-           ResponseEntity<Transfer> response= restTemplate.exchange(transfersUrl + "addTransfer", HttpMethod.POST, makeTransferEntity(newTransfer), Transfer.class);
-           transfer = response.getBody();
+            ResponseEntity<Transfer> response = restTemplate.exchange(transfersUrl + "addTransfer", HttpMethod.POST, makeTransferEntity(newTransfer), Transfer.class);
+            transfer = response.getBody();
         } catch (RestClientResponseException | ResourceAccessException e) {
             BasicLogger.log(e.getMessage());
         }
@@ -292,20 +292,45 @@ public class TEnmoService {
     }
 
     public void requestMoney() {
-        int  transferStatusID, transferTypeID;
+        int transferStatusID, transferTypeID;
         BigDecimal amount;
         transferStatusID = 1; //Pending
         transferTypeID = 1; //Request
 
         showUsers();
 
-        System.out.println("Enter ID of user you are requesting from (0 to cancel):");
+        System.out.println("Enter ID of user you are sending to (0 to cancel):");
         searchAndSetForAccountByUserID(Integer.parseInt(sc.nextLine()));
-        System.out.println("Enter amount:");
-        amount = BigDecimal.valueOf(Double.parseDouble(sc.nextLine()));
+        while (othersAccount.equals(myAccount) || othersAccount == null) {
+            System.out.println("Error! You CANNOT request money from yourself & Select a VALID User ID!");
+            System.out.println("Enter ID of user you are sending to (0 to cancel):");
+            searchAndSetForAccountByUserID(Integer.parseInt(sc.nextLine()));
+        }
+
+            System.out.println("Enter amount:");
+            amount = BigDecimal.valueOf(Double.parseDouble(sc.nextLine()));
+
+            int chkGreaterLessThanZero = amount.compareTo(BigDecimal.valueOf(0));
+
+            while (chkGreaterLessThanZero <= 0) {
+                System.out.println("*****************************************************************");
+                System.out.println("|                  Error! Invalid amount!                       |");
+                System.out.println("|                  No Zeros! No Negatives!                      |");
+                System.out.println("*****************************************************************\n");
+
+                System.out.println("Enter ID of user you are sending to (0 to cancel):");
+                searchAndSetForAccountByUserID(Integer.parseInt(sc.nextLine()));
+                while (othersAccount.equals(myAccount)) {
+                    System.out.println("Error! You CANNOT send money to yourself!");
+                    System.out.println("Enter ID of user you are sending to (0 to cancel):");
+                    searchAndSetForAccountByUserID(Integer.parseInt(sc.nextLine()));
+                }
+                System.out.println("Enter amount:");
+                amount = BigDecimal.valueOf(Double.parseDouble(sc.nextLine()));
+            }
 
         //                   Senders AcctID   |  Rcpt AcctID  |  $  |  Approve, Deny, Pending  |   Receive(1) or Send(2)
-        Transfer newTransfer = new Transfer(myAccount.getAccountID(), othersAccount.getAccountID(), transferStatusID, transferTypeID, amount);
+        Transfer newTransfer = new Transfer(othersAccount.getAccountID(), myAccount.getAccountID(), transferStatusID, transferTypeID, amount);
 
         //Should create and add a new Transfer entry in the Database
         addTransferToDatabase(newTransfer);
@@ -323,10 +348,10 @@ public class TEnmoService {
         setTransfersList();
         System.out.println("--------------------------------------------------------------");
         System.out.println("Transfer Details");
-        System.out.printf("%-15s %-10s %-25s %-25s", "ID", "From/To:", "",  "Amount");
+        System.out.printf("%-15s %-10s %-25s %-25s", "ID", "From/To:", "", "Amount");
         System.out.println("\n--------------------------------------------------------------");
         for (User user : usersList) {
-            if(user.getId() == myAccount.getUserID()) {
+            if (user.getId() == myAccount.getUserID()) {
                 System.out.println("Current User: " + user.getUsername());
             }
         }
@@ -356,9 +381,9 @@ public class TEnmoService {
         }
     }
 
-    public String findUsernameByAccountID(int accountID){
+    public String findUsernameByAccountID(int accountID) {
         User user = null;
-        try{
+        try {
             ResponseEntity<User> response =
                     restTemplate.exchange(accountsUrl + "getUserByAcctID/" + accountID, HttpMethod.GET, makeAuthEntity(), User.class);
             user = response.getBody();
@@ -369,17 +394,17 @@ public class TEnmoService {
     }
 
     /*********************************
-    * STEP 6 SELECT TRANSFER ID
-    **********************************/
-    public void viewTransferInfoByID(){
+     * STEP 6 SELECT TRANSFER ID
+     **********************************/
+    public void viewTransferInfoByID() {
         viewMyTransfers();
         System.out.println("Please enter Transfer ID to view details (0 to cancel):");
         int transferID = Integer.parseInt(sc.nextLine());
         boolean flag = true;
 
-        while (flag){
-            for (Transfer transfer : transfersList){
-                if(transferID == transfer.getTransferID()){
+        while (flag) {
+            for (Transfer transfer : transfersList) {
+                if (transferID == transfer.getTransferID()) {
                     String type, status;
                     System.out.println("ID: " + transfer.getTransferID());
                     System.out.println("From: " + findUsernameByAccountID(transfer.getAccountFromID()));
@@ -394,7 +419,7 @@ public class TEnmoService {
                             System.out.println("Type: " + type);
                             break;
                     }
-                    switch (transfer.getTransferStatusID()){
+                    switch (transfer.getTransferStatusID()) {
                         case 1:
                             status = "Pending";
                             System.out.println("Status: " + status);
@@ -413,11 +438,11 @@ public class TEnmoService {
                     break;
                 }
             }
-            if(flag) {
+            if (flag) {
                 System.out.println("*************************************************");
                 System.out.println("| Error! Invalid input! Transfer was not found! |");
                 System.out.println("*************************************************\n");
-                System.out.println("Please enter Transfer ID to view details (0 to cancel):");
+                System.out.println("\nPlease enter Transfer ID to view details (0 to cancel):");
                 transferID = Integer.parseInt(sc.nextLine());
             }
         }
@@ -428,76 +453,81 @@ public class TEnmoService {
      *   -Needs the loop to print out the transfer list -GL
      *   -Needs to be tested -GL
      ************************************************************************/
-    public Transfer[] viewMyPendingTransfers() {
-        Transfer[] pendingTransfers = null;
+    public void setMyPendingTransfers() {
+        int accountID = myAccount.getAccountID();
         try {
             ResponseEntity<Transfer[]> myTransfers =
-                    restTemplate.exchange(transfersUrl + "/viewMyTransfersByStatus=" + 1, HttpMethod.GET,
-                            makeAccountEntity(myAccount), Transfer[].class);
-            pendingTransfers = myTransfers.getBody();
+                    restTemplate.exchange(transfersUrl + "viewMyTransfersByStatus=" + 1 + "?" + accountID, HttpMethod.GET,
+                            makeAuthEntity(), Transfer[].class);
+            this.pendingTransfers = myTransfers.getBody();
+
         } catch (RestClientResponseException | ResourceAccessException e) {
             BasicLogger.log(e.getMessage());
         }
-
-        System.out.println("------------------------------------------------");
-        System.out.println("Pending Transfers");
-        System.out.printf("%-10s %-25s %-25s", "ID", "To", "Amount");
-        System.out.println("\n------------------------------------------------");
-        for (Transfer transfer : pendingTransfers) {
-            System.out.printf("%-10s %-25s %-25s", transfer.getTransferID(), findUsernameByAccountID(transfer.getAccountFromID()), "$ " + transfer.getAmount());
-        }
-        System.out.println();
-        return pendingTransfers;
     }
 
-    public void updateTransferStatus(){
-        Transfer[] pendingTransfer = viewMyPendingTransfers();
-        Transfer transferToUpdate;
-        System.out.println("Please enter transfer ID to approve/reject (0 to cancel):");
-        int userInput = Integer.parseInt(sc.nextLine());
-        for (Transfer transfer : pendingTransfer){
-            if(transfer.getTransferID() == userInput){
-                transferToUpdate = transfer;
-                System.out.println("\nPlease enter Transfer ID to approve/reject (0 to cancel): ");
-                switch (userInput){
-                    case 1:
-                        transfer.setTransferStatusID(2);
-                        try {
-                            restTemplate.put(
-                                    transfersUrl + transferToUpdate.getTransferID() + "/updateTransfer", makeTransferEntity(transfer));
-                        } catch (ResourceAccessException e) {
-                            System.out.println(e.getMessage());
-                        } catch (RestClientResponseException e) {
-                            System.out.println(e.getRawStatusCode());
-                        }
-                        break;
-                    case 2:
-                        transfer.setTransferStatusID(3);
-                        try {
-                            restTemplate.put(
-                                    transfersUrl + transferToUpdate.getTransferID() + "/updateTransfer", makeTransferEntity(transfer));
-                        } catch (ResourceAccessException e) {
-                            System.out.println(e.getMessage());
-                        } catch (RestClientResponseException e) {
-                            System.out.println(e.getRawStatusCode());
-                        }
-                        break;
-                    case 0:
-                        transfer.setTransferStatusID(1);
-                        try {
-                            restTemplate.put(
-                                    transfersUrl + transferToUpdate.getTransferID() + "/updateTransfer", makeTransferEntity(transfer));
-                        } catch (ResourceAccessException e) {
-                            System.out.println(e.getMessage());
-                        } catch (RestClientResponseException e) {
-                            System.out.println(e.getRawStatusCode());
-                        }
-                        break;
+    public void updateTransferStatus() {
+        setMyPendingTransfers();
+        boolean transferFlag = true;
+        int userInput;
+        if (this.pendingTransfers == null) {
+            System.out.println("You do not have any 'PENDING' transfers!");
+            return;
+        }
+        while (transferFlag) {
+            System.out.println("Please enter transfer ID to approve/reject (0 to cancel):");
+            try {
+                Transfer transferToUpdate;
+                userInput = Integer.parseInt(sc.nextLine());
+                if (userInput == 0) {
+                    return;
                 }
+                for (Transfer transfer : pendingTransfers) {
+                    if (transfer.getTransferID() == userInput) {
+                        transferToUpdate = transfer;
+                        System.out.println(
+                                "1: Approve\n" +
+                                        "2: Reject\n" +
+                                        "0: Don't approve or reject\n" +
+                                        "---------\n" +
+                                        "Please choose an option:");
+                        userInput = Integer.parseInt(sc.nextLine());
+                        boolean validInput = false;
+                        while (!validInput) {
+
+                            if (userInput > 2 || userInput < 0) {
+                                System.out.println(
+                                        "1: Approve\n" +
+                                                "2: Reject\n" +
+                                                "0: Don't approve or reject\n" +
+                                                "---------\n" +
+                                                "Please choose an option:");
+                                userInput = Integer.parseInt(sc.nextLine());
+                            }
+                            switch (userInput) {
+                                case 1:
+                                    validInput = true;
+                                    transferToUpdate.setTransferStatusID(2);
+                                    break;
+                                case 2:
+                                    validInput = true;
+                                    transferToUpdate.setTransferStatusID(3);
+                                    break;
+                                case 0:
+                                    validInput = true;
+                                    updateTransferStatus();
+                                    break;
+                            }
+
+                        }
+                    }
+                }
+            } catch (IllegalArgumentException e) {
+                System.out.println("Invalid Transfer ID Entered. Try again!");
             }
         }
-
     }
+
 
     /************************************************************************
      *    METHODS TO MAKE HTTP ENTITIES

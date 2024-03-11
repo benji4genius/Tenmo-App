@@ -71,9 +71,9 @@ public class TransferController {
         }
     }
 
-    @RequestMapping(path ="/viewMyTransfersByStatus={statusTypeID}", method = RequestMethod.GET)
-    public List<Transfer> getTransfersByStatus(@PathVariable int statusTypeID, @RequestBody Account myAccount){
-        List<Transfer> transfers = transferDao.getTransfersByStatus(statusTypeID, myAccount);
+    @RequestMapping(path ="/viewMyTransfersByStatus={statusTypeID}?{accountID}", method = RequestMethod.GET)
+    public List<Transfer> getTransfersByStatus(@PathVariable int statusTypeID, @PathVariable int accountID){
+        List<Transfer> transfers = transferDao.getTransfersByStatus(statusTypeID, accountID);
         if(transfers == null){
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "No Transfers were found");
         }else{

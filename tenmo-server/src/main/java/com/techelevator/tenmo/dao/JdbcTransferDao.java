@@ -173,13 +173,13 @@ public class JdbcTransferDao implements TransferDao {
     }
 
     @Override
-    public List<Transfer> getTransfersByStatus(int statusTypeID, Account myAccount) {
+    public List<Transfer> getTransfersByStatus(int statusTypeID,  int accountID) {
         List<Transfer> transfers = new ArrayList<>();
         String sql =
                 "SELECT * FROM transfer " +
-                        "WHERE transfer_status_id = ? AND account_from = ? AND account_to = ?;";
+                        "WHERE transfer_status_id = ? AND account_to = ?;";
         try {
-            SqlRowSet results = jdbcTemplate.queryForRowSet(sql, statusTypeID);
+            SqlRowSet results = jdbcTemplate.queryForRowSet(sql, statusTypeID, accountID);
             while (results.next()) {
                 transfers.add(mapRowToTransfer(results));
             }
