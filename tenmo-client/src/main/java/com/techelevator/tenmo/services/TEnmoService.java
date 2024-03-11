@@ -457,7 +457,7 @@ public class TEnmoService {
         int accountID = myAccount.getAccountID();
         try {
             ResponseEntity<Transfer[]> myTransfers =
-                    restTemplate.exchange(transfersUrl + "viewMyTransfersByStatus=" + 1 + "?" + accountID, HttpMethod.GET,
+                    restTemplate.exchange(transfersUrl + "viewMyTransfersByStatus=" + 1 + "/" + accountID, HttpMethod.GET,
                             makeAuthEntity(), Transfer[].class);
             this.pendingTransfers = myTransfers.getBody();
 
@@ -468,11 +468,22 @@ public class TEnmoService {
 
     public void updateTransferStatus() {
         setMyPendingTransfers();
+
         boolean transferFlag = true;
         int userInput;
         if (this.pendingTransfers == null) {
             System.out.println("You do not have any 'PENDING' transfers!");
             return;
+        }
+
+        System.out.println("--------------------------------------------------------------");
+        System.out.println("Transfer Details");
+        System.out.printf("%-15s %-25s %-25s", "ID", "To", "Amount");
+        System.out.println("\n--------------------------------------------------------------");
+
+        for(Transfer transfer : pendingTransfers){
+            String name = findUsernameByAccountID(transfer.getAccountToID());
+            System.out.printf("%n%-15s %-25s %-25s", transfer.getTransferID(), name, "$ " +transfer.getAmount());
         }
         while (transferFlag) {
             System.out.println("Please enter transfer ID to approve/reject (0 to cancel):");
