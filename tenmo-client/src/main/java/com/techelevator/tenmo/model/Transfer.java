@@ -18,7 +18,9 @@ public class Transfer {
         this.amount = amount;
     }
 
-    public Transfer(){}
+    public Transfer(){
+
+    }
 
     public int getTransferTypeID() {
         return transferTypeID;
